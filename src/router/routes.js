@@ -1,8 +1,22 @@
 const routes = [
+  // Redirect '/' to login
+  { path: '/', redirect: '/login' },
+
+  // Login page at '/login'
   {
-    path: '/',
+    path: '/login',
+    component: () => import('layouts/LoginLayout.vue'),
+    children: [{ path: '', component: () => import('pages/LoginPage.vue') }],
+  },
+  {
+    path: '/warranty-card',
     component: () => import('layouts/MainLayout.vue'),
-    children: [{ path: '', component: () => import('pages/IndexPage.vue') }],
+    children: [{ path: '', component: () => import('pages/WarrantyCard.vue') }],
+  },
+  {
+    path: '/customer-card',
+    component: () => import('layouts/MainLayout.vue'),
+    children: [{ path: '', component: () => import('pages/CustomerCard.vue') }],
   },
 
   // Always leave this as last one,
