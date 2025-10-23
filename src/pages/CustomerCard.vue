@@ -1,204 +1,171 @@
 <template>
-  <q-page class="flex flex-center">
+  <q-page class="flex flex-center bg-grey-2">
     <q-form ref="mainForm" @submit.prevent="handleSubmit">
-      <div class="row q-gutter-lg">
-        <div class="col-6">
-          <!-- GENERAL SECTION -->
-          <MainContainer>
-            <div class="row">
-              <div class="col-12">
-                <h2 class="text-subtitle1 text-weight-bold">{{ title }}</h2>
-              </div>
-              <!-- Left -->
-              <div class="col-12 col-md-6 q-pa-md">
-                <q-input
-                  v-model.number="formData.customerNumber"
-                  type="number"
-                  dense
-                  outlined
-                  :rules="[(val) => !!val || 'Required']"
-                  label="Customer No."
-                />
-                <q-input
-                  v-model.number="formData.customerName"
-                  type="text"
-                  dense
-                  outlined
-                  :rules="[(val) => !!val || 'Required']"
-                  label="Name"
-                />
-                <q-input
-                  v-model.number="formData.title"
-                  type="text"
-                  dense
-                  outlined
-                  :rules="[(val) => !!val || 'Required']"
-                  label="Title"
-                />
-                <q-input
-                  v-model.number="formData.IdNumber"
-                  type="number"
-                  dense
-                  outlined
-                  :rules="[(val) => !!val || 'Required']"
-                  label="ID Number"
-                />
-                <q-input
-                  v-model.number="formData.tradingName"
-                  type="text"
-                  dense
-                  outlined
-                  :rules="[(val) => !!val || 'Required']"
-                  label="Trading Name"
-                />
-                <q-input
-                  v-model.number="formData.rgisteredMraName"
-                  type="text"
-                  dense
-                  outlined
-                  :rules="[(val) => !!val || 'Required']"
-                  label="Registered to MRA as"
-                />
-              </div>
+      <!-- SECTION: General Info -->
+      <MainContainer>
+        <div class="row q-col-gutter-md">
+          <div class="col-12">
+            <h2 class="text-subtitle1 text-weight-bold">{{ title }}</h2>
+          </div>
 
-              <!-- Right -->
-              <div class="col-12 col-md-6 q-pa-md">
-                <q-select
-                  v-model="formData.customerCategory"
-                  :options="customerCategoryOptions"
-                  dense
-                  outlined
-                  :rules="[(val) => !!val || 'Please select an item']"
-                  label="Customer Category"
-                />
-                <q-select
-                  v-model="formData.customerGroup"
-                  :options="customerGroupOptions"
-                  dense
-                  outlined
-                  :rules="[(val) => !!val || 'Please select an item']"
-                  label="Customer Group"
-                />
-                <q-select
-                  v-model="formData.customerType"
-                  :options="customerTypeOptions"
-                  dense
-                  outlined
-                  :rules="[(val) => !!val || 'Please select an item']"
-                  label="Customer Type"
-                />
-                <q-select
-                  v-model="formData.status"
-                  :options="statusOptions"
-                  dense
-                  outlined
-                  :rules="[(val) => !!val || 'Please select an item']"
-                  label="Status (Blocked)"
-                />
-                <q-input
-                  v-model.number="formData.financedBy"
-                  type="text"
-                  dense
-                  outlined
-                  :rules="[(val) => !!val || 'Required']"
-                  label="Financed By"
-                />
-              </div>
-            </div>
-          </MainContainer>
+          <div class="col-12 col-md-6">
+            <q-input
+              v-model="formData.customerNumber"
+              type="number"
+              outlined
+              dense
+              :rules="[required]"
+              label="Customer No."
+            />
+            <q-input
+              v-model="formData.customerName"
+              type="text"
+              outlined
+              dense
+              :rules="[required]"
+              label="Name"
+            />
+            <q-input
+              v-model="formData.title"
+              type="text"
+              outlined
+              dense
+              :rules="[required]"
+              label="Title"
+            />
+            <q-input
+              v-model="formData.idNumber"
+              type="number"
+              outlined
+              dense
+              :rules="[required]"
+              label="ID Number"
+            />
+            <q-input
+              v-model="formData.tradingName"
+              type="text"
+              outlined
+              dense
+              :rules="[required]"
+              label="Trading Name"
+            />
+            <q-input
+              v-model="formData.registeredMraName"
+              type="text"
+              outlined
+              dense
+              :rules="[required]"
+              label="Registered to MRA as"
+            />
+          </div>
+
+          <div class="col-12 col-md-6">
+            <q-select
+              v-model="formData.customerCategory"
+              :options="customerCategoryOptions"
+              outlined
+              dense
+              :rules="[required]"
+              label="Customer Category"
+            />
+            <q-select
+              v-model="formData.customerGroup"
+              :options="customerGroupOptions"
+              outlined
+              dense
+              :rules="[required]"
+              label="Customer Group"
+            />
+            <q-select
+              v-model="formData.customerType"
+              :options="customerTypeOptions"
+              outlined
+              dense
+              :rules="[required]"
+              label="Customer Type"
+            />
+            <q-select
+              v-model="formData.status"
+              :options="statusOptions"
+              outlined
+              dense
+              :rules="[required]"
+              label="Status (Blocked)"
+            />
+            <q-input
+              v-model="formData.financedBy"
+              type="text"
+              outlined
+              dense
+              :rules="[required]"
+              label="Financed By"
+            />
+          </div>
         </div>
-        <div class="col-6">
-          <!-- Customer Form -->
-          <MainContainer>
-            <div class="row">
-              <div class="container-header">
-                <div class="col-12">
-                  <h2 class="text-subtitle1 text-weight-bold">Address & Contact</h2>
-                </div>
-              </div>
-            </div>
+      </MainContainer>
 
-            <div class="row">
-              <div class="col col-md-6 q-pa-md">
-                <q-input
-                  label="Address 1"
-                  v-model.number="formData.address1"
-                  type="text"
-                  dense
-                  outlined
-                  :rules="[(val) => !!val || 'Required']"
-                />
-                <q-input
-                  label="Address 2"
-                  v-model.number="formData.address2"
-                  type="text"
-                  dense
-                  outlined
-                  :rules="[(val) => !!val || 'Required']"
-                />
-                <q-input
-                  label="Post Code"
-                  v-model.number="formData.postCode"
-                  type="number"
-                  dense
-                  outlined
-                  :rules="[(val) => !!val || 'Required']"
-                />
+      <!-- SECTION: Address & Contact -->
+      <MainContainer>
+        <h2 class="text-subtitle1 text-weight-bold q-mb-md">Address & Contact</h2>
+        <div class="row q-col-gutter-md">
+          <div class="col-12 col-md-6">
+            <q-input
+              v-model="formData.address1"
+              outlined
+              dense
+              label="Address 1"
+              :rules="[required]"
+            />
+            <q-input
+              v-model="formData.address2"
+              outlined
+              dense
+              label="Address 2"
+              :rules="[required]"
+            />
+            <q-input
+              v-model="formData.postCode"
+              type="number"
+              outlined
+              dense
+              label="Post Code"
+              :rules="[required]"
+            />
+            <q-input v-model="formData.city" outlined dense label="City" :rules="[required]" />
+            <q-input
+              v-model="formData.country"
+              outlined
+              dense
+              label="Country"
+              :rules="[required]"
+            />
+          </div>
 
-                <q-input
-                  label="City"
-                  v-model.number="formData.city"
-                  type="text"
-                  dense
-                  outlined
-                  :rules="[(val) => !!val || 'Required']"
-                />
-                <q-input
-                  label="Country"
-                  v-model.number="formData.country"
-                  type="text"
-                  dense
-                  outlined
-                  :rules="[(val) => !!val || 'Required']"
-                />
-              </div>
-
-              <div class="col col-md-6 q-pa-md">
-                <q-input
-                  label="Phone Number"
-                  v-model="formData.phoneNumber"
-                  type="number"
-                  dense
-                  outlined
-                  :rules="[(val) => !!val || 'Required']"
-                />
-                <q-input
-                  label="Email"
-                  v-model="formData.email"
-                  type="email"
-                  dense
-                  outlined
-                  :rules="[(val) => !!val || 'Required']"
-                />
-                <q-input
-                  label="Fax Number"
-                  v-model="formData.faxNumber"
-                  type="number"
-                  dense
-                  outlined
-                  :rules="[(val) => !!val || 'Required']"
-                />
-              </div>
-            </div>
-          </MainContainer>
+          <div class="col-12 col-md-6">
+            <q-input
+              v-model="formData.phoneNumber"
+              type="tel"
+              outlined
+              dense
+              label="Phone Number"
+              :rules="[required]"
+            />
+            <q-input
+              v-model="formData.email"
+              type="email"
+              outlined
+              dense
+              label="Email"
+              :rules="[emailRule]"
+            />
+            <q-input v-model="formData.faxNumber" type="text" outlined dense label="Fax Number" />
+          </div>
         </div>
-      </div>
+      </MainContainer>
 
-      <div class="row q-ma-lg">
-        <div class="col-12 flex flex-center">
-          <!-- SAVE BUTTON -->
-          <q-btn label="Save" color="primary" type="submit" />
-        </div>
+      <!-- ACTION BUTTONS -->
+      <div class="q-pa-md flex flex-center">
+        <q-btn :loading="loading" label="Save" color="primary" type="submit" />
       </div>
     </q-form>
   </q-page>
@@ -207,21 +174,65 @@
 <script setup>
 import MainContainer from 'components/MainContainer.vue'
 import { reactive, ref, onMounted } from 'vue'
+import { useQuasar } from 'quasar'
 import axios from 'axios'
 
 defineProps({
-  title: {
-    type: String,
-    default: 'Create customer',
-  },
+  title: { type: String, default: 'Create Customer' },
 })
 
+const $q = useQuasar()
+const mainForm = ref(null)
+const loading = ref(false)
 const records = ref([])
+
+// Reusable validation rules
+const required = (val) => !!val || 'Required'
+const emailRule = (val) => !val || /.+@.+\..+/.test(val) || 'Invalid email'
+
+// Dropdown data
+const customerCategoryOptions = ref([
+  { label: 'Retail', value: 'retail' },
+  { label: 'Wholesale', value: 'wholesale' },
+  { label: 'Corporate', value: 'corporate' },
+])
+const customerGroupOptions = ref([
+  { label: 'Group A', value: 'A' },
+  { label: 'Group B', value: 'B' },
+])
+
+const customerTypeOptions = ref([
+  { label: 'Individual', value: 'individual' },
+  { label: 'Company', value: 'company' },
+])
+const statusOptions = ['Active', 'Blocked']
+
+// Form model
+const formData = reactive({
+  customerNumber: '',
+  customerName: '',
+  title: '',
+  idNumber: '',
+  tradingName: '',
+  registeredMraName: '',
+  customerCategory: '',
+  customerGroup: '',
+  customerType: '',
+  status: '',
+  financedBy: '',
+  address1: '',
+  address2: '',
+  postCode: '',
+  city: '',
+  country: '',
+  phoneNumber: '',
+  email: '',
+  faxNumber: '',
+})
 
 onMounted(async () => {
   try {
     const res = await axios.get('/api/itemcard')
-    console.log('API response:', res.data)
     if (res.data.success) {
       records.value = res.data.data
     } else {
@@ -232,45 +243,29 @@ onMounted(async () => {
   }
 })
 
-// Select Options
-const itemOptions = ['Item-001', 'Item-002', 'Item-003']
-const modelOptions = ['Model-A', 'Model-B', 'Model-C']
-const statusOptions = ['Installed', 'Not installed']
-
-const formData = reactive({
-  cardNumber: '',
-  itemNumber: '',
-  itemDescription: '',
-  serialNumber: '',
-  model: '',
-  status: 'Installed',
-  active: 'Yes',
-  warrantyDate: '',
-  customerNumber: '',
-  customerName: '',
-  user: '',
-  phoneNumber: '',
-  purchaseAt: '',
-  postCode: '',
-  contact: '',
-  salesDate: '',
-  soldAt: '',
-})
-
-const mainForm = ref(null)
-
 async function handleSubmit() {
-  if (!mainForm.value) return
   const valid = await mainForm.value.validate()
   if (!valid) return
 
+  loading.value = true
   try {
     const payload = { ...formData }
-    console.log('📤 Posting JSON:', payload)
     const res = await axios.post('/api/soap-save', payload)
+    $q.notify({ type: 'positive', message: 'Customer saved successfully!' })
     console.log('✅ Save response:', res.data)
   } catch (err) {
+    $q.notify({ type: 'negative', message: 'Save failed. Check console.' })
     console.error('❌ SOAP Save error:', err)
+  } finally {
+    loading.value = false
   }
 }
 </script>
+
+<style scoped>
+.full-width {
+  width: 100%;
+  max-width: 1440px;
+  margin: auto;
+}
+</style>

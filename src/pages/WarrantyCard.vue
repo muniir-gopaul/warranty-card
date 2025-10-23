@@ -4,11 +4,14 @@
       <!-- GENERAL SECTION -->
       <MainContainer>
         <div class="row">
-          <div class="col-12 align">
+          <div class="col-12 flex justify-between">
+            <q-btn color="secondary" label="Create Customer" to="/create-customer" />
             <q-btn color="primary" icon="print" label="Print" flat dense @click="printPage" />
           </div>
         </div>
+      </MainContainer>
 
+      <MainContainer>
         <div class="row">
           <div class="col-12">
             <h2 class="text-subtitle1 text-weight-bold">General Information</h2>

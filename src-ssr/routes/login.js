@@ -36,7 +36,7 @@ router.post('/login', async (req, res) => {
     const pool = await connectMSSQL()
     const result = await pool.request().input('username', username).input('password', password)
       .query(`
-        SELECT Id, Username FROM dbo.Users
+        SELECT Id, Username FROM dbo.User
         WHERE Username = @username AND Password = @password
       `)
 
@@ -53,6 +53,7 @@ router.post('/login', async (req, res) => {
     req.session.lastActivityAt = Date.now()
 
     return res.json({ success: true, user, token })
+    // return res.json({ success: true, user })
   } catch (err) {
     console.error('[LOGIN ERROR]', err)
     return res.status(500).json({ success: false, error: 'Internal Server Error' })
