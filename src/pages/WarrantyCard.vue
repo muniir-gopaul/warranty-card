@@ -216,7 +216,7 @@ const records = ref([])
 
 onMounted(async () => {
   try {
-    const res = await axios.get('/api/itemcard')
+    const res = await axios.get('/api/soap/customers')
     console.log('API response:', res.data)
     if (res.data.success) {
       records.value = res.data.data
@@ -260,13 +260,13 @@ async function handleSubmit() {
   const valid = await mainForm.value.validate()
   if (!valid) return
 
-  try {
-    const payload = { ...formData }
-    console.log('📤 Posting JSON:', payload)
-    const res = await axios.post('/api/soap-save', payload)
-    console.log('✅ Save response:', res.data)
-  } catch (err) {
-    console.error('❌ SOAP Save error:', err)
-  }
+  // try {
+  //   const payload = { ...formData }
+  //   console.log('📤 Posting JSON:', payload)
+  //   const res = await axios.post('/api/soap-save', payload)
+  //   console.log('✅ Save response:', res.data)
+  // } catch (err) {
+  //   console.error('❌ SOAP Save error:', err)
+  // }
 }
 </script>

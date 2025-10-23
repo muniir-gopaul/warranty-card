@@ -11,7 +11,7 @@ import {
 } from '#q-app/wrappers'
 
 import loginRoutes from './routes/login.js'
-import itemCardRoutes from './routes/mssql-data.js'
+import itemCardRoutes from './routes/soapClient.js'
 import { connectMSSQL } from './db/mssql.js'
 
 export const create = defineSsrCreate(async () => {
