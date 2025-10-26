@@ -7,6 +7,7 @@ import {
   createWebHashHistory,
 } from 'vue-router'
 import routes from './routes'
+import axios from 'axios'
 
 export default defineRouter(function () {
   const createHistory = process.env.SERVER
@@ -23,20 +24,17 @@ export default defineRouter(function () {
 
   // 🛡️ Client-side route guard only
   if (process.env.CLIENT) {
-    Router.beforeEach((to, from, next) => {
-      const publicPages = ['/login']
+    Router.beforeEach(async (to, from, next) => {
+      const publicPages = ['/login'] // protected removed
       const authRequired = !publicPages.includes(to.path)
 
-      let isLoggedIn = false
-      try {
-        isLoggedIn = !!localStorage.getItem('token')
-      } catch (e) {
-        console.warn('[ROUTER GUARD] localStorage not accessible:', e)
-      }
-
-      if (authRequired && !isLoggedIn) {
-        console.log('[ROUTER GUARD] 🔒 Redirecting to /login')
-        return next('/login')
+      if (authRequired) {
+        try {
+          const res = await axios.get('/api/login/session', { withCredentials: true })
+          if (!res.data.loggedIn) return next('/login')
+        } catch {
+          return next('/login')
+        }
       }
 
       next()

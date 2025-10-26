@@ -11,6 +11,7 @@
         </div>
       </MainContainer>
 
+      <!-- General Information -->
       <MainContainer>
         <div class="row">
           <div class="col-12">
@@ -19,28 +20,22 @@
           <!-- Left -->
           <div class="col-12 col-md-6 q-pa-md">
             <q-input
-              v-model.number="formData.cardNumber"
+              v-model.number="formData.No"
               type="number"
               dense
               outlined
-              :rules="[(val) => !!val || 'Required']"
               label="Warranty No."
             />
-            <q-select
-              v-model="formData.itemNumber"
-              :options="itemOptions"
-              dense
-              outlined
-              :rules="[(val) => !!val || 'Please select an item']"
-              label="Item No."
-            />
             <q-input
-              v-model="formData.itemDescription"
+              v-model="formData.itemNumber"
+              label="Item No."
               dense
               outlined
               :rules="[(val) => !!val || 'Required']"
-              label="Item Description"
+              @blur="fetchItemDetails"
             />
+            <q-input v-model="formData.itemDescription" dense outlined label="Item Description" />
+            <q-input v-model="formData.brand" dense outlined label="Brand" />
             <q-input
               v-model="formData.serialNumber"
               dense
@@ -52,20 +47,14 @@
 
           <!-- Right -->
           <div class="col-12 col-md-6 q-pa-md">
-            <q-select
-              v-model="formData.model"
-              :options="modelOptions"
-              dense
-              outlined
-              :rules="[(val) => !!val || 'Please select a model']"
-              label="Model"
-            />
+            <q-input v-model="formData.model" dense outlined label="Model" />
             <q-select
               v-model="formData.status"
               :options="statusOptions"
+              emit-value
+              map-options
               dense
               outlined
-              :rules="[(val) => !!val || 'Please select a status']"
               label="Status"
             />
             <q-select
@@ -73,7 +62,6 @@
               :options="['Yes', 'No']"
               dense
               outlined
-              :rules="[(val) => !!val || 'Please select Yes or No']"
               label="Active"
             />
             <q-input
@@ -81,8 +69,7 @@
               mask="date"
               dense
               outlined
-              :rules="['date']"
-              label="Warranty Date"
+              label="Warranty Start Date"
             >
               <template v-slot:append>
                 <q-icon name="event" class="cursor-pointer">
@@ -118,62 +105,23 @@
               type="number"
               dense
               outlined
-              :rules="[(val) => !!val || 'Required']"
             />
-            <q-input
-              label="Name"
-              v-model="formData.customerName"
-              dense
-              outlined
-              :rules="[(val) => !!val || 'Required']"
-            />
-            <q-input
-              label="User/Owner"
-              v-model="formData.user"
-              dense
-              outlined
-              :rules="[(val) => !!val || 'Required']"
-            />
+            <q-input label="Name" v-model="formData.customerName" dense outlined />
+            <q-input label="User/Owner" v-model="formData.user" dense outlined />
             <q-input
               label="Phone Number"
               v-model="formData.phoneNumber"
               type="number"
               dense
               outlined
-              :rules="[(val) => !!val || 'Required']"
             />
-            <q-input
-              label="Purchased At"
-              v-model="formData.purchaseAt"
-              dense
-              outlined
-              :rules="[(val) => !!val || 'Required']"
-            />
+            <q-input label="Purchased At" v-model="formData.purchaseAt" dense outlined />
           </div>
 
           <div class="col col-md-6 q-pa-md">
-            <q-input
-              label="Post Code"
-              v-model="formData.postCode"
-              dense
-              outlined
-              :rules="[(val) => !!val || 'Required']"
-            />
-            <q-input
-              label="Contact"
-              v-model="formData.contact"
-              dense
-              outlined
-              :rules="[(val) => !!val || 'Required']"
-            />
-            <q-input
-              label="Warranty Date"
-              v-model="formData.salesDate"
-              mask="date"
-              dense
-              outlined
-              :rules="['date']"
-            >
+            <q-input label="Post Code" v-model="formData.postCode" dense outlined />
+            <q-input label="Contact" v-model="formData.contact" dense outlined />
+            <q-input label="Sales Date" v-model="formData.salesDate" mask="date" dense outlined>
               <template v-slot:append>
                 <q-icon name="event" class="cursor-pointer">
                   <q-popup-proxy cover transition-show="scale" transition-hide="scale">
@@ -186,20 +134,13 @@
                 </q-icon>
               </template>
             </q-input>
-            <q-input
-              label="Sold At (Shop)"
-              v-model="formData.soldAt"
-              dense
-              outlined
-              :rules="[(val) => !!val || 'Required']"
-            />
+            <q-input label="Sold At (Shop)" v-model="formData.soldAt" dense outlined />
           </div>
         </div>
       </MainContainer>
 
       <div class="row q-ma-lg">
         <div class="col-12 flex flex-center">
-          <!-- SAVE BUTTON -->
           <q-btn label="Save" color="primary" type="submit" />
         </div>
       </div>
@@ -209,34 +150,53 @@
 
 <script setup>
 import MainContainer from 'components/MainContainer.vue'
-import { reactive, ref, onMounted } from 'vue'
+import { reactive } from 'vue'
+import { useQuasar } from 'quasar'
 import axios from 'axios'
+import { buildNavisionServiceItem } from './navisionServiceItemTemplate.js'
 
-const records = ref([])
+const $q = useQuasar()
 
-onMounted(async () => {
-  try {
-    const res = await axios.get('/api/soap/customers')
-    console.log('API response:', res.data)
-    if (res.data.success) {
-      records.value = res.data.data
-    } else {
-      console.error('API error:', res.data.error)
-    }
-  } catch (err) {
-    console.error('Fetch error:', err)
+const statusOptions = [
+  { label: '_blank_', value: '_blank_' },
+  { label: 'Own_Service_Item', value: 'Own_Service_Item' },
+  { label: 'Installed', value: 'Installed' },
+  { label: 'Temporarily_Installed', value: 'Temporarily_Installed' },
+  { label: 'Defective', value: 'Defective' },
+]
+
+function normalizeFormData() {
+  // Ensure NAV Option fields are valid
+  const NAV_STATUS_OPTIONS = [
+    '_blank_',
+    'Own_Service_Item',
+    'Installed',
+    'Temporarily_Installed',
+    'Defective',
+  ]
+
+  const NAV_ACTIVE_OPTIONS = ['Yes', 'No']
+
+  // Set defaults if invalid
+  if (!NAV_STATUS_OPTIONS.includes(formData.status)) {
+    formData.status = 'Installed'
   }
-})
 
-// Select Options
-const itemOptions = ['Item-001', 'Item-002', 'Item-003']
-const modelOptions = ['Model-A', 'Model-B', 'Model-C']
-const statusOptions = ['Installed', 'Not installed']
+  if (!NAV_ACTIVE_OPTIONS.includes(formData.active)) {
+    formData.active = 'Yes'
+  }
+
+  // Ensure No is sent for updates
+  if (!formData.isNew && !formData.No) {
+    throw new Error('Cannot update an item without No (primary key).')
+  }
+}
 
 const formData = reactive({
-  cardNumber: '',
+  No: '',
   itemNumber: '',
   itemDescription: '',
+  brand: '',
   serialNumber: '',
   model: '',
   status: 'Installed',
@@ -253,20 +213,141 @@ const formData = reactive({
   soldAt: '',
 })
 
-const mainForm = ref(null)
+async function fetchItemDetails() {
+  if (!formData.itemNumber) return
 
+  try {
+    $q.loading.show({
+      message: 'Fetching item details...',
+      spinnerColor: 'white',
+      backgroundColor: 'rgba(0,0,0,0.6)',
+    })
+
+    // Fetch a single Service Item from NAV
+    const res = await axios.get(`/soap/service-items/${formData.itemNumber}`)
+    const item = res.data?.data
+
+    if (res.data?.success && item) {
+      // Populate all form fields
+      formData.No = item.No || '' // NAV primary key
+      formData.Key = item.Key || '' // NAV update key
+      formData.itemNumber = item.Item_No || ''
+      formData.itemDescription = item.Description || ''
+      formData.brand = item.Brand || ''
+      formData.model = item.Model || item['Product Group Code'] || ''
+      formData.serialNumber = item.Serial_No || ''
+      formData.status = item.Status || 'Installed'
+      formData.active = item.Active || 'Yes'
+      formData.warrantyDate = item.Warranty_Starting_Date_Parts || ''
+      formData.customerNumber = item.Customer_No || ''
+      formData.customerName = item.Name || ''
+      formData.user = item.User_Owner || ''
+      formData.phoneNumber = item.Phone_No_of_User_Owner || ''
+      formData.purchaseAt = item.Purchased_At || ''
+      formData.postCode = item.Post_Code || ''
+      formData.contact = item.Contact || ''
+      formData.salesDate = item.Sales_Date || ''
+      formData.soldAt = item.Sold_At_Shop || ''
+
+      $q.notify({
+        color: 'positive',
+        message: `Service Item ${formData.itemNumber} loaded successfully.`,
+        position: 'top',
+      })
+    } else {
+      // Clear form for new entry
+      formData.No = ''
+      formData.Key = ''
+      formData.itemDescription = ''
+      formData.brand = ''
+      formData.model = ''
+      formData.serialNumber = ''
+      formData.status = 'Installed'
+      formData.active = 'Yes'
+      formData.warrantyDate = ''
+      formData.customerNumber = ''
+      formData.customerName = ''
+      formData.user = ''
+      formData.phoneNumber = ''
+      formData.purchaseAt = ''
+      formData.postCode = ''
+      formData.contact = ''
+      formData.salesDate = ''
+      formData.soldAt = ''
+
+      $q.notify({
+        color: 'warning',
+        message: `Service Item ${formData.itemNumber} not found.`,
+        position: 'top',
+      })
+    }
+  } catch (err) {
+    console.error('Fetch error:', err)
+    $q.notify({
+      color: 'negative',
+      message: 'Error fetching item details.',
+      position: 'top',
+    })
+  } finally {
+    $q.loading.hide()
+  }
+}
+
+/**
+ * Handle form submit → Send Service Item to Navision
+ */
 async function handleSubmit() {
-  if (!mainForm.value) return
-  const valid = await mainForm.value.validate()
-  if (!valid) return
+  if (!formData.itemNumber || !formData.serialNumber) {
+    $q.notify({
+      color: 'negative',
+      message: 'Item Number and Serial Number are required.',
+      position: 'top',
+    })
+    return
+  }
 
-  // try {
-  //   const payload = { ...formData }
-  //   console.log('📤 Posting JSON:', payload)
-  //   const res = await axios.post('/api/soap-save', payload)
-  //   console.log('✅ Save response:', res.data)
-  // } catch (err) {
-  //   console.error('❌ SOAP Save error:', err)
-  // }
+  normalizeFormData() // ensures default values, dates, Status, Active, etc.
+  const serviceItemPayload = buildNavisionServiceItem(formData)
+
+  try {
+    $q.loading.show({
+      message: 'Submitting to Navision...',
+      spinnerColor: 'white',
+      backgroundColor: 'rgba(0,0,0,0.6)',
+    })
+
+    const res = await axios.post('/soap/service-items', {
+      ...serviceItemPayload,
+      itemNumber: formData.itemNumber,
+      serialNumber: formData.serialNumber,
+      isNew: !formData.No,
+      ...(formData.Key && { Key: formData.Key }), // only for updates
+      ...(formData.No && !formData.isNew ? { No: formData.No } : {}), // send No for update
+    })
+
+    if (res.data?.success) {
+      if (!formData.No && res.data?.data?.No) {
+        formData.No = res.data.data.No
+      }
+
+      $q.notify({
+        color: 'positive',
+        message: `Service Item ${formData.No || formData.itemNumber} submitted successfully!`,
+        position: 'top',
+      })
+    } else {
+      $q.notify({
+        color: 'negative',
+        message: res.data?.error || 'Failed to submit service item.',
+        position: 'top',
+      })
+    }
+  } catch (err) {
+    console.error('SOAP Submit Error:', err)
+    const navError = err.response?.data?.error || err.message || 'Unexpected error submitting item.'
+    $q.notify({ color: 'negative', message: navError, position: 'top' })
+  } finally {
+    $q.loading.hide()
+  }
 }
 </script>

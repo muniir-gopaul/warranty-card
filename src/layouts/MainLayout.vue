@@ -5,6 +5,7 @@
       <q-toolbar>
         <q-toolbar-title>
           {{ title }}
+          <!-- Welcome, {{ user }}! -->
         </q-toolbar-title>
 
         <slot name="header-actions" />
@@ -32,6 +33,16 @@ defineProps({
   title: {
     type: String,
     default: 'Warranty Card Management',
+  },
+  user: {
+    type: String,
+    default: () => {
+      if (typeof window !== 'undefined') {
+        const u = localStorage.getItem('user')
+        return u ? JSON.parse(u).name : ''
+      }
+      return ''
+    },
   },
 })
 

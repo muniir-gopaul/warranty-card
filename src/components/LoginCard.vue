@@ -38,8 +38,7 @@ async function onSubmit() {
       password: password.value,
     })
     if (res.data.success) {
-      localStorage.setItem('token', res.data.token)
-      await router.push('/warranty-card')
+      await router.push('/warranty-card') // protected page
     } else {
       error.value = res.data.message
     }
