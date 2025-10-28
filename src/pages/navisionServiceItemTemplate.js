@@ -4,29 +4,41 @@
  * Template for sending Service Item to Navision via SOAP
  * Replace the values from your reactive form `formData` before sending
  */
-
 export function buildNavisionServiceItem(formData) {
-  return {
-    No: formData.No || '', // Required
-    Item_No: formData.itemNumber || '', // Required
-    Description: formData.itemDescription || '',
-    Brand: formData.brand || '',
-    Serial_No: formData.serialNumber || '', // Required
-    Warranty_Date: formatDate(formData.warrantyDate), // Format: YYYY-MM-DD
-    Customer_No: formData.customerNumber || '',
-    Customer_Name: formData.customerName || '',
-    User: formData.user || '',
-    Phone_No: formData.phoneNumber || '',
-    Purchase_At: formData.purchaseAt || '',
-    Post_Code: formData.postCode || '',
-    Contact: formData.contact || '',
-    Sales_Date: formatDate(formData.salesDate), // Format: YYYY-MM-DD
-    Sold_At: formData.soldAt || '',
-    Status: formData.status || 'Installed',
+  const isNew = !formData.No
+
+  const payload = {
     Model: formData.model || '',
+    Status: formData.status || 'Installed',
     Active: formData.active || 'Yes',
-    Card_No: formData.cardNumber || '',
+    Name: formData.customerName || '',
+    Contact: formData.contact || '',
+    Post_Code: formData.postCode || '',
+    User_Owner: formData.user || '',
+    Phone_No_of_User_Owner: formData.phoneNumber || '',
+    Purchased_At: formData.purchaseAt || '',
+    Sold_At_Shop: formData.soldAt || '',
+    ...(formData.salesDate ? { Sales_Date: formatDate(formData.salesDate) } : {}),
+    ...(formData.WarrantyStartDate
+      ? { Warranty_Start_Date: formatDate(formData.WarrantyStartDate) }
+      : {}),
+    ...(isNew
+      ? {
+          Item_No: formData.itemNumber || '',
+          Serial_No: formData.serialNumber || '',
+          Customer_No: formData.customerNumber || '',
+        }
+      : {}),
   }
+
+  // NAV cannot update keys for existing items
+  if (!isNew) {
+    delete payload.Item_No
+    delete payload.Serial_No
+    delete payload.Customer_No
+  }
+
+  return payload
 }
 
 /**
@@ -37,8 +49,5 @@ function formatDate(dateStr) {
   if (!dateStr) return ''
   const d = new Date(dateStr)
   if (isNaN(d.getTime())) return ''
-  const yyyy = d.getFullYear()
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  const dd = String(d.getDate()).padStart(2, '0')
-  return `${yyyy}-${mm}-${dd}`
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
