@@ -2,58 +2,44 @@
   <q-page class="flex flex-center bg-grey-2">
     <q-form ref="mainForm" @submit.prevent="handleSubmit">
       <!-- GENERAL SECTION -->
-      <MainContainer>
-        <div class="row">
-          <div class="col-12">
-            <p class="text-h6 text-primary no-margin">Create Service Item</p>
-            <q-separator color="grey-4" class="q-mb-md" />
+      <MainContainer class="no-margin">
+        <div class="row flex align-center">
+          <div class="col-6">
+            <p class="text-h5 text-bold flex items-center text-grey-7 no-margin">
+              <i class="material-icons q-mr-md">list_alt</i>Create a new Service Item Card
+            </p>
           </div>
-        </div>
-        <div class="row q-gutter-x-lg">
-          <div class="col-12 col-md-4">
-            <q-input
-              v-model="formData.itemNumber"
-              label="Item No."
-              dense
-              outlined
-              :rules="[(val) => !!val || 'Required']"
-              :readonly="!isNewItem()"
-            />
-          </div>
-
-          <div class="col-12 col-md-4">
-            <q-input
-              v-model="formData.serialNumber"
-              label="Serial No."
-              dense
-              outlined
-              :rules="[(val) => !!val || 'Required']"
-              :readonly="!isNewItem()"
-            />
-          </div>
-
-          <div class="col-12 col-md-3">
-            <!-- <q-btn
-              color="light-blue-10"
-              icon="save"
-              label="Save"
-              class="rounded-borders"
-              :disable="!formData.itemNumber || !formData.Description"
+          <div class="col-6 flex flex-end justify-end">
+            <q-btn
+              icon="print"
+              color="deep-orange-14"
+              label="Print"
+              class="rounded-borders q-mr-md"
+              :disable="!formData.No"
               @click="handleSubmit"
-            /> -->
+            />
+            <q-btn
+              icon="create"
+              label="Edit Service Item"
+              color="green"
+              class="rounded-borders"
+              size="md"
+              @click="handleUpdate"
+              :disable="isNewItem()"
+            />
           </div>
         </div>
       </MainContainer>
 
-      <div v-if="formData && formData.itemNumber" class="row">
+      <div v-if="formData && formData.WarrantyNo" class="row">
         <div class="col-12">
-          <h1 class="text-h3 no-margin">{{ formData.WarrantyNo }} : {{ formData.Description }}</h1>
+          <h1 class="text-h3 no-margin">{{ formData.WarrantyNo }} {{ formData.Description }}</h1>
         </div>
       </div>
 
-      <div v-else class="text-grey q-pa-md">
+      <div v-else class="text-grey q-py-md flex items-center">
         <q-icon name="info" size="sm" class="q-mr-sm" />
-        No Service Item loaded yet.
+        <p class="text-h6 no-margin">No Service Item loaded yet.</p>
       </div>
 
       <!-- General Information -->
@@ -68,12 +54,39 @@
           <!-- Left -->
           <div class="col-12 col-md-6">
             <q-input
+              v-model="formData.itemNumber"
+              label="Item No."
+              dense
+              outlined
+              :rules="[(val) => !!val]"
+              :readonly="!isNewItem()"
+              class="no-padding q-mb-md"
+            />
+            <q-input
+              v-model="formData.serialNumber"
+              label="Serial No."
+              dense
+              outlined
+              :rules="[(val) => !!val]"
+              :readonly="!isNewItem()"
+              class="no-padding q-mb-md"
+            />
+            <q-btn
+              color="light-blue-10"
+              icon="search"
+              label="Search Item"
+              class="rounded-borders"
+              :disable="!formData.itemNumber || !formData.serialNumber"
+              @click="handleSearch"
+              size="md"
+            />
+            <q-input
               v-model="formData.Description"
               dense
               outlined
               label="Description"
               :readonly="!isNewItem()"
-              :rules="[(val) => !!val || 'Required']"
+              class="q-mb-md"
             />
             <q-input
               v-model="formData.itemDescription"
@@ -97,7 +110,7 @@
               outlined
               label="Model"
               class="q-mb-md"
-              readonly
+              :readonly="!isNewItem()"
             />
             <q-select
               class="q-mb-md"
@@ -117,7 +130,7 @@
               dense
               outlined
               label="Active"
-              readonly
+              :readonly="!isNewItem()"
             />
             <q-input
               v-model="formData.ServiceItemGroupCode"
@@ -125,7 +138,7 @@
               outlined
               label="Service Item Group Code"
               class="q-mb-md"
-              readonly
+              :readonly="!isNewItem()"
             />
             <q-input
               v-model="formData.ServiceItemComponents"
@@ -133,7 +146,7 @@
               outlined
               label="Service Item Components"
               class="q-mb-md"
-              readonly
+              :readonly="!isNewItem()"
             />
             <q-input
               v-model="formData.WarrantyStartDate"
@@ -141,7 +154,7 @@
               outlined
               label="Warranty Start Date"
               class="q-mb-md"
-              readonly
+              :readonly="!isNewItem()"
             />
           </div>
 
@@ -153,7 +166,7 @@
               dense
               outlined
               label="Warranty On Spare Parts"
-              readonly
+              :readonly="!isNewItem()"
             />
             <q-input
               class="q-mb-md"
@@ -161,7 +174,7 @@
               dense
               outlined
               label="Warranty On Labour"
-              readonly
+              :readonly="!isNewItem()"
             />
             <q-input
               class="q-mb-md"
@@ -169,7 +182,7 @@
               dense
               outlined
               label="Warranty On Transport"
-              readonly
+              :readonly="!isNewItem()"
             />
             <q-input
               class="q-mb-md"
@@ -177,7 +190,7 @@
               dense
               outlined
               label="Warranty On Gas Thermostat"
-              readonly
+              :readonly="!isNewItem()"
             />
             <q-input
               class="q-mb-md"
@@ -185,7 +198,7 @@
               dense
               outlined
               label="Warranty On Compressor"
-              readonly
+              :readonly="!isNewItem()"
             />
             <q-input
               class="q-mb-md"
@@ -193,7 +206,7 @@
               dense
               outlined
               label="Warranty On Motor"
-              readonly
+              :readonly="!isNewItem()"
             />
 
             <q-input
@@ -202,7 +215,7 @@
               dense
               outlined
               label="Warranty Starting Date (Parts)"
-              readonly
+              :readonly="!isNewItem()"
             />
             <q-input
               class="q-mb-md"
@@ -211,7 +224,7 @@
               dense
               outlined
               label="Warranty Ending Date (Parts)"
-              readonly
+              :readonly="!isNewItem()"
             />
             <q-input
               class="q-mb-md"
@@ -219,7 +232,7 @@
               dense
               outlined
               label="Warranty % (Parts)"
-              readonly
+              :readonly="!isNewItem()"
             />
 
             <q-input
@@ -229,7 +242,7 @@
               dense
               outlined
               label="Warranty Starting Date (Labour)"
-              readonly
+              :readonly="!isNewItem()"
             />
             <q-input
               class="q-mb-md"
@@ -238,7 +251,7 @@
               dense
               outlined
               label="Warranty Ending Date (Labour)"
-              readonly
+              :readonly="!isNewItem()"
             />
             <q-input
               class="q-mb-md"
@@ -246,7 +259,7 @@
               dense
               outlined
               label="Warranty % (Labour)"
-              readonly
+              :readonly="!isNewItem()"
             />
           </div>
         </div>
@@ -257,12 +270,21 @@
         <div class="row">
           <div class="col-12">
             <h2 class="text-h6 text-primary no-margin">Customer: {{ formData.customerNumber }}</h2>
-            <q-separator color="grey-4" class="q-mb-md" />
           </div>
-
-          <!-- <q-btn color="light-blue-10" label="Create Customer" to="/create-customer" /> -->
+          <q-separator color="grey-4" class="full-width" />
         </div>
-
+        <div class="row">
+          <div class="col-12 flex">
+            <q-btn
+              color="green"
+              label="Create new customer"
+              size="md"
+              to="/create-customer"
+              icon="person"
+              class="q-my-md"
+            />
+          </div>
+        </div>
         <div class="row q-col-gutter-lg">
           <!-- Left Column -->
           <!-- Customer select + search -->
@@ -284,8 +306,9 @@
               @update:model-value="onCustomerSelected"
               @filter="onCustomerFilter"
               @clear="clearCustomer"
-              class="q-mb-md"
+              :rules="[(val) => !!val]"
               :readonly="!isNewItem()"
+              class="no-padding q-mb-md"
             >
               <template v-slot:append>
                 <q-btn dense flat round icon="search" @click="onSearchClick" />
@@ -298,7 +321,7 @@
               dense
               outlined
               class="q-mb-md"
-              :readonly="!isNewItem()"
+              readonly
             />
             <q-input
               label="Phone Number"
@@ -307,7 +330,7 @@
               dense
               outlined
               class="q-mb-md"
-              :readonly="!isNewItem()"
+              readonly
             />
             <q-input
               label="Post Code"
@@ -315,7 +338,7 @@
               dense
               outlined
               class="q-mb-md"
-              :readonly="!isNewItem()"
+              readonly
             />
             <q-input
               label="Address"
@@ -323,7 +346,7 @@
               dense
               outlined
               class="q-mb-md"
-              :readonly="!isNewItem()"
+              readonly
             />
             <q-input label="City" v-model="formData.city" dense outlined class="q-mb-md" readonly />
           </div>
@@ -336,7 +359,7 @@
               dense
               outlined
               class="q-mb-md"
-              :readonly="!isNewItem()"
+              readonly
             />
             <q-input
               label="Sales Date"
@@ -345,7 +368,6 @@
               dense
               outlined
               class="q-mb-md"
-              :readonly="!isNewItem()"
             >
               <template v-slot:append>
                 <q-icon name="event" class="cursor-pointer">
@@ -366,13 +388,7 @@
               outlined
               class="q-mb-md"
             />
-            <q-input
-              label="Sold At (Shop)"
-              v-model="formData.soldAt"
-              dense
-              outlined
-              :readonly="!isNewItem()"
-            />
+            <q-input label="Sold At (Shop)" v-model="formData.soldAt" dense outlined />
           </div>
         </div>
       </MainContainer>
@@ -380,7 +396,7 @@
       <div class="row q-ma-lg">
         <div class="col-12 flex flex-center">
           <q-btn
-            color="light-blue-10"
+            color="light-blue-14"
             icon="save"
             label="Save"
             class="rounded-borders"
@@ -635,11 +651,12 @@ async function fetchSavedData(itemNumber, serialNumber) {
     if (res.data?.success && res.data.data) {
       // Populate the form data with the response
       const savedData = res.data.data
-      Object.keys(savedData).forEach((key) => {
-        if (formData.hasOwnProperty(key)) {
-          formData[key] = savedData[key] || ''
-        }
-      })
+      // Object.keys(savedData).forEach((key) => {
+      //   if (formData.hasOwnProperty(key)) {
+      //     formData[key] = savedData[key] || ''
+      //   }
+      // })
+      console.log(savedData)
 
       $q.notify({
         color: 'positive',
