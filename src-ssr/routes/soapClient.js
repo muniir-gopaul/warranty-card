@@ -103,6 +103,7 @@ router.get('/service-items', async (req, res) => {
 // ===================================================================
 router.post('/service-items', async (req, res) => {
   const formData = req.body
+  console.log('\n📨 Received Service Item form data:', formData)
   if (!formData?.itemNumber || !formData?.serialNumber)
     return res
       .status(400)
@@ -140,7 +141,7 @@ router.post('/service-items', async (req, res) => {
 
 // ===================================================================
 // GET /soap/customers?search=ABC
-// Fetch Customers by Name (Customer_Card service)
+// Fetch Customers by Name (CustomerCard service)
 // ===================================================================
 router.get('/customers', async (req, res) => {
   const search = req.query.search
@@ -184,6 +185,67 @@ router.get('/customers', async (req, res) => {
     res.json({ success: true, data: customers })
   } catch (err) {
     console.error('❌ Error fetching customers:', err)
+    res.status(500).json({ success: false, error: err.message })
+  }
+})
+
+//------------------------------------------------------------
+// POST /soap/customers
+// Create or Update Customer (from form submission)
+// ------------------------------------------------------------
+router.post('/customers', async (req, res) => {
+  const formData = req.body
+  logNav('📨 Received Customer Form Data', formData)
+
+  if (!formData.customerName) {
+    return res.status(400).json({
+      success: false,
+      error: 'Customer Name is required.',
+    })
+  }
+
+  try {
+    const client = await getNavClient('CustomerCard')
+
+    const payload = {
+      Name: formData.customerName,
+      Title: formData.title || '',
+      ID_Number: formData.idNumber || '',
+      // Trading_Name: formData.tradingName || '',  ❌ remove or rename
+      // Registered_to_MRA_as: formData.registeredMraName || '',
+      // Customer_Category: formData.customerCategory || '',
+      Customer_Group: formData.customerGroup || '',
+      Customer_Type_MRA: formData.customerType || '',
+      // Blocked: formData.status || ' ',
+      // Financed_By: formData.financedBy || '',
+      Address: formData.address1 || '',
+      Address_2: formData.address2 || '',
+      Post_Code: formData.postCode || '',
+      City: formData.city || '',
+      Country_Region_Code: formData.country || '',
+      Phone_No: formData.phoneNumber || '',
+      E_Mail: formData.email || '',
+      Fax_No: formData.faxNumber || '',
+    }
+
+    // 🩹 Remove No if empty — NAV will auto-generate
+    if (formData.customerNumber) {
+      payload.No = formData.customerNumber
+    }
+
+    logNav('🚀 NAV SOAP Create Payload', payload)
+
+    // ✅ Always create
+    const [result] = await client.CreateAsync({ CustomerCard: payload })
+    logNav('📦 NAV SOAP Raw Response', result)
+
+    const card = result?.CustomerCard || result?.Create_Result?.CustomerCard || null
+
+    if (!card) throw new Error('NAV did not return a valid CustomerCard.')
+
+    res.json({ success: true, data: card })
+  } catch (err) {
+    console.error('❌ NAV SOAP Error:', err)
     res.status(500).json({ success: false, error: err.message })
   }
 })

@@ -1,5 +1,5 @@
 <template>
-  <q-btn flat color="primary" icon="logout" label="Logout" @click="logout" />
+  <q-btn outline color="primary" icon="logout" label="Logout" @click="logout" />
 </template>
 
 <script setup>

@@ -1,16 +1,31 @@
 <template>
   <q-layout view="lHh Lpr lFf">
     <!-- Header -->
-    <q-header elevated class="bg-primary text-white">
-      <q-toolbar>
+    <q-header>
+      <q-toolbar class="bg-grey-12 shadow-5">
         <q-toolbar-title>
-          {{ title }}
+          <q-btn
+            icon="verified"
+            class="text-blue-grey-8 text-weight-bold text-h5 rounded-borders text-bold"
+            flat
+            :label="title"
+            @click="goTo('/landing')"
+          />
           <!-- Welcome, {{ user }}! -->
         </q-toolbar-title>
 
         <slot name="header-actions" />
 
-        <q-btn flat icon="logout" label="Logout" @click="logout" />
+        <q-btn
+          icon-right="logout"
+          size="md"
+          outline
+          icon-size="12px"
+          label="Logout"
+          @click="logout"
+          class="rounded-borders q-mr-md"
+          color="deep-orange-14"
+        />
       </q-toolbar>
     </q-header>
 
@@ -21,7 +36,7 @@
 
     <!-- Footer -->
     <q-footer class="bg-grey-8 text-white">
-      <div class="text-center q-pa-sm">© {{ new Date().getFullYear() }} MyApp</div>
+      <div class="text-center q-pa-sm">© {{ new Date().getFullYear() }} {{ title }}</div>
     </q-footer>
   </q-layout>
 </template>
@@ -65,5 +80,8 @@ async function logout() {
 .q-page {
   padding-top: 80px;
   min-height: calc(100vh - 100px);
+}
+.q-toolbar {
+  min-height: 80px;
 }
 </style>

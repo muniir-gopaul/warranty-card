@@ -2,7 +2,7 @@
 
 /**
  * Template for sending Service Item to Navision via SOAP
- * Replace the values from your reactive form `formData` before sending
+ * Replace the values from reactive form `formData` before sending
  */
 export function buildNavisionServiceItem(formData) {
   const isNew = !formData.No
@@ -17,6 +17,7 @@ export function buildNavisionServiceItem(formData) {
     User_Owner: formData.user || '',
     Phone_No_of_User_Owner: formData.phoneNumber || '',
     Purchased_At: formData.purchaseAt || '',
+    Invoice_No: formData.invoiceNo || '',
     Sold_At_Shop: formData.soldAt || '',
     ...(formData.salesDate ? { Sales_Date: formatDate(formData.salesDate) } : {}),
     ...(formData.WarrantyStartDate

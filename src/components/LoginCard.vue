@@ -38,7 +38,7 @@ async function onSubmit() {
       password: password.value,
     })
     if (res.data.success) {
-      await router.push('/warranty-card') // protected page
+      await router.push('/landing') // protected page
     } else {
       error.value = res.data.message
     }

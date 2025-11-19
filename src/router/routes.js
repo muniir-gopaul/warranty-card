@@ -8,8 +8,14 @@ const routes = [
     component: () => import('layouts/LoginLayout.vue'),
     children: [{ path: '', component: () => import('pages/LoginPage.vue') }],
   },
+  // Landing page at 'welcome'
   {
-    path: '/warranty-card',
+    path: '/landing',
+    component: () => import('layouts/MainLayout.vue'),
+    children: [{ path: '', component: () => import('pages/LandingPage.vue') }],
+  },
+  {
+    path: '/service-item',
     component: () => import('layouts/MainLayout.vue'),
     children: [{ path: '', component: () => import('pages/WarrantyCard.vue') }],
   },
