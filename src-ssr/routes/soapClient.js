@@ -44,15 +44,23 @@ export async function getNavClient(wsdlName = 'Service_Item_Card', authMode = 'b
   const WSDL_URL = `http://192.168.1.200:7047/DynamicsNAV110/WS/FORTRESS_LIVE/Page/${wsdlName}?wsdl`
 
   try {
-    const wsdl_headers = {}
-    const wsdl_options = { httpAgent: safeAgent }
+    // ✅ THIS IS THE CRITICAL FIX FOR 401
+    const basicAuth = Buffer.from(`${NAVUSERNAME}:${NAVUSERPASSWORD}`).toString('base64')
+
+    const wsdl_headers = {
+      Authorization: `Basic ${basicAuth}`, // ✅ PRE-AUTH FOR WSDL DOWNLOAD
+    }
+
+    const wsdl_options = {
+      httpAgent: safeAgent,
+    }
 
     const client = await soap.createClientAsync(WSDL_URL, {
       wsdl_headers,
       wsdl_options,
     })
 
-    // ✅ AUTH MODE SELECTOR
+    // ✅ NOW APPLY RUNTIME AUTH AFTER CLIENT EXISTS
     if (authMode === 'ntlm') {
       const security = new soap.NTLMSecurity({
         username: NAVUSERNAME,
@@ -61,7 +69,6 @@ export async function getNavClient(wsdlName = 'Service_Item_Card', authMode = 'b
       })
       client.setSecurity(security)
     } else {
-      // ✅ BASIC AUTH (FOR SERVICE ITEM)
       client.setSecurity(new soap.BasicAuthSecurity(NAVUSERNAME, NAVUSERPASSWORD))
     }
 
@@ -77,7 +84,7 @@ export async function getNavClient(wsdlName = 'Service_Item_Card', authMode = 'b
 
     logNav('✅ NAV SOAP Client Ready', {
       WSDL_URL,
-      NAVUSERNAME,
+      USER: NAVUSERNAME,
       DOMAIN,
       AUTH: authMode.toUpperCase(),
     })
