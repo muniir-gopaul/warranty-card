@@ -15,13 +15,18 @@ function logNav(label, data) {
 }
 
 // --------------------------
-// SOAP Client Factory
+// SOAP Client Factory (✅ DOMAIN FIX + SHARED)
 // --------------------------
 export async function getNavClient(wsdlName = 'Service_Item_Card') {
   const NAVUSERNAME = process.env.SOAP_USERNAME
   const NAVUSERPASSWORD = process.env.SOAP_PASSWORD
   const DOMAIN = process.env.SOAP_DOMAIN || ''
-  const WSDL_URL = `http://srvnav:7047/DynamicsNAV110/WS/FORTRESS_LIVE/Page/${wsdlName}?wsdl`
+
+  // ✅ MUST MATCH YOUR WORKING CUSTOMER DOMAIN
+  const BASE_URL = process.env.SOAP_BASE_URL || 'http://192.168.1.200:7047'
+
+  const WSDL_URL = `${BASE_URL}/DynamicsNAV110/WS/FORTRESS_LIVE/Page/${wsdlName}?wsdl`
+
   try {
     const security = new soap.NTLMSecurity({
       username: NAVUSERNAME,
@@ -38,10 +43,10 @@ export async function getNavClient(wsdlName = 'Service_Item_Card') {
     const client = await soap.createClientAsync(WSDL_URL, { wsdl_headers, wsdl_options })
     client.setSecurity(security)
 
-    // Log SOAP requests and responses
     client.on('request', (xml) => {
       console.log('\n📤 NAV SOAP REQUEST:\n', xml)
     })
+
     client.on('response', (xml) => {
       console.log('\n📥 NAV SOAP RESPONSE:\n', xml)
     })
@@ -56,21 +61,25 @@ export async function getNavClient(wsdlName = 'Service_Item_Card') {
 
 // ===================================================================
 // GET /soap/service-items?itemNo=123&serialNo=456
-// Fetch Service Item by Item_No + Serial_No
 // ===================================================================
 router.get('/service-items', async (req, res) => {
   const { itemNo, serialNo } = req.query
+
   if (!itemNo || !serialNo) {
-    return res.status(400).json({ success: false, error: 'Both itemNo and serialNo are required.' })
+    return res.status(400).json({
+      success: false,
+      error: 'itemNo and serialNo are required.',
+    })
   }
 
   try {
     const client = await getNavClient('Service_Item_Card')
 
+    // ✅ FIELD NAME FIX
     const params = {
       filter: [
-        { Field: 'Item_No', Criteria: itemNo },
-        { Field: 'Serial_No', Criteria: serialNo },
+        { Field: 'No', Criteria: itemNo }, // ✅ FIXED
+        { Field: 'Serial_No', Criteria: serialNo }, // ✅ OK
       ],
       setSize: 1,
     }
@@ -80,12 +89,12 @@ router.get('/service-items', async (req, res) => {
     const [result] = await client.ReadMultipleAsync(params)
     logNav('📬 NAV ReadMultiple result', result)
 
-    const item = result?.ReadMultiple_Result?.Service_Item_Card?.[0]
+    const item = result?.ReadMultiple_Result?.Service_Item_Card?.[0] || null
+
     if (!item) {
-      logNav('⚠️ No item found', { itemNo, serialNo })
       return res.status(404).json({
         success: false,
-        message: `No service item found for Item_No=${itemNo} and Serial_No=${serialNo}.`,
+        message: `No service item found for ${itemNo} / ${serialNo}`,
       })
     }
 
@@ -98,23 +107,26 @@ router.get('/service-items', async (req, res) => {
 
 // ===================================================================
 // POST /soap/service-items
-// Create or Update Service Item Card
+// Create OR Update Service Item
 // ===================================================================
 router.post('/service-items', async (req, res) => {
   const formData = req.body
-  console.log('\n📨 Received Service Item form data:', formData)
-  if (!formData?.itemNumber || !formData?.serialNumber)
-    return res
-      .status(400)
-      .json({ success: false, error: 'Item Number and Serial Number are required.' })
+
+  logNav('📨 Received Service Item form data', formData)
+
+  if (!formData?.No || !formData?.Serial_No) {
+    return res.status(400).json({
+      success: false,
+      error: 'No and Serial_No are required.',
+    })
+  }
 
   try {
     const client = await getNavClient('Service_Item_Card')
+
     const payload = { ...formData }
 
-    // NAV does not allow updates to certain fields
-    delete payload.itemNumber
-    delete payload.serialNumber
+    // ✅ NAV DOES NOT ALLOW THIS FIELD
     delete payload.isNew
 
     logNav('🚀 NAV SOAP Payload', payload)
@@ -126,10 +138,7 @@ router.post('/service-items', async (req, res) => {
     logNav('📦 NAV SOAP Raw Response', result)
 
     const card =
-      result?.Service_Item_Card ||
-      result?.Create_Result?.Service_Item_Card ||
-      result?.Update_Result?.Service_Item_Card ||
-      null
+      result?.Create_Result?.Service_Item_Card || result?.Update_Result?.Service_Item_Card || null
 
     res.json({ success: true, data: card })
   } catch (err) {
@@ -140,45 +149,30 @@ router.post('/service-items', async (req, res) => {
 
 // ===================================================================
 // GET /soap/customers?search=ABC
-// Fetch Customers by Name (CustomerCard service)
 // ===================================================================
 router.get('/customers', async (req, res) => {
   const search = req.query.search
-  if (!search) return res.json({ success: true, data: [] })
 
-  const NAVUSERNAME = process.env.SOAP_USERNAME
-  const NAVUSERPASSWORD = process.env.SOAP_PASSWORD
-  const DOMAIN = process.env.SOAP_DOMAIN || ''
-  const WSDL_URL = `http://srvnav:7047/DynamicsNAV110/WS/FORTRESS_LIVE/Page/Customer_Card?wsdl`
+  if (!search) {
+    return res.json({ success: true, data: [] })
+  }
 
   try {
-    const security = new soap.NTLMSecurity({
-      username: NAVUSERNAME,
-      password: NAVUSERPASSWORD,
-      domain: DOMAIN,
-      negotiate: true,
-    })
-    const wsdl_headers = {}
-    const wsdl_options = {}
-    security.addHeaders(wsdl_headers)
-    security.addOptions(wsdl_options)
-
-    const client = await soap.createClientAsync(WSDL_URL, { wsdl_headers, wsdl_options })
-    client.setSecurity(security)
+    const client = await getNavClient('Customer_Card')
 
     const params = {
       filter: [{ Field: 'Search_Name', Criteria: `*${search}*` }],
       setSize: 10,
     }
 
-    console.log('\n📨 NAV Customer Search params:', params)
+    logNav('📨 NAV Customer Search params', params)
 
     const [result] = await client.ReadMultipleAsync(params)
 
-    console.log('\n📬 NAV Customer Search result:', result)
+    logNav('📬 NAV Customer Search result', result)
 
     const customers =
-      result?.ReadMultiple_Result?.CustomerCard || result?.ReadMultiple_Result?.Customer_Card || []
+      result?.ReadMultiple_Result?.Customer_Card || result?.ReadMultiple_Result?.CustomerCard || []
 
     res.json({ success: true, data: customers })
   } catch (err) {
@@ -187,10 +181,10 @@ router.get('/customers', async (req, res) => {
   }
 })
 
-//------------------------------------------------------------
+// ===================================================================
 // POST /soap/customers
-// Create or Update Customer (from form submission)
-// ------------------------------------------------------------
+// Create OR Update Customer (✅ MULTI-SCREEN SAFE)
+// ===================================================================
 router.post('/customers', async (req, res) => {
   const formData = req.body
   logNav('📨 Received Customer Form Data', formData)
@@ -209,13 +203,8 @@ router.post('/customers', async (req, res) => {
       Name: formData.customerName,
       Title: formData.title || '',
       ID_Number: formData.idNumber || '',
-      // Trading_Name: formData.tradingName || '',  ❌ remove or rename
-      // Registered_to_MRA_as: formData.registeredMraName || '',
-      // Customer_Category: formData.customerCategory || '',
       Customer_Group: formData.customerGroup || '',
       Customer_Type_MRA: formData.customerType || '',
-      // Blocked: formData.status || ' ',
-      // Financed_By: formData.financedBy || '',
       Address: formData.address1 || '',
       Address_2: formData.address2 || '',
       Post_Code: formData.postCode || '',
@@ -226,20 +215,26 @@ router.post('/customers', async (req, res) => {
       Fax_No: formData.faxNumber || '',
     }
 
-    // 🩹 Remove No if empty — NAV will auto-generate
+    // ✅ ATTACH No ONLY IF UPDATING
     if (formData.customerNumber) {
       payload.No = formData.customerNumber
     }
 
-    logNav('🚀 NAV SOAP Create Payload', payload)
+    logNav('🚀 NAV SOAP Payload', payload)
 
-    // ✅ Always create
-    const [result] = await client.CreateAsync({ CustomerCard: payload })
+    const [result] = formData.customerNumber
+      ? await client.UpdateAsync({ Customer_Card: payload })
+      : await client.CreateAsync({ Customer_Card: payload })
+
     logNav('📦 NAV SOAP Raw Response', result)
 
-    const card = result?.CustomerCard || result?.Create_Result?.CustomerCard || null
+    const card =
+      result?.Create_Result?.Customer_Card ||
+      result?.Update_Result?.Customer_Card ||
+      result?.Customer_Card ||
+      null
 
-    if (!card) throw new Error('NAV did not return a valid CustomerCard.')
+    if (!card) throw new Error('NAV did not return a valid Customer_Card.')
 
     res.json({ success: true, data: card })
   } catch (err) {
