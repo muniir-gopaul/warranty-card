@@ -16,24 +16,25 @@ function logNav(label, data) {
 }
 
 // =======================================================
-// ✅ NTLM SAFE HTTP AGENT (NO KEEP-ALIVE, SINGLE SOCKET)
+// ✅ SAFE HTTP AGENT (NO KEEP-ALIVE, SINGLE SOCKET)
 // =======================================================
-const ntlmAgent = new http.Agent({
-  keepAlive: false, // ❌ NTLM breaks with keep-alive
-  maxSockets: 1, // ✅ single socket required
+const safeAgent = new http.Agent({
+  keepAlive: false,
+  maxSockets: 1,
 })
 
 // =======================================================
-// ✅ NAV SOAP CLIENT CACHE (NTLM MUST BE REUSED)
+// ✅ NAV SOAP CLIENT CACHE (PER WSDL + AUTH MODE)
 // =======================================================
-const navClientCache = {}
+const navClientCache = {} // key = `${wsdlName}_${authMode}`
 
-// --------------------------
-// ✅ NTLM SOAP Client Factory (SAFE)
-// --------------------------
-export async function getNavClient(wsdlName = 'Service_Item_Card') {
-  if (navClientCache[wsdlName]) {
-    return navClientCache[wsdlName]
+// =======================================================
+// ✅ SOAP CLIENT FACTORY (NTLM OR BASIC)
+// =======================================================
+export async function getNavClient(wsdlName = 'Service_Item_Card', authMode = 'basic') {
+  const cacheKey = `${wsdlName}_${authMode}`
+  if (navClientCache[cacheKey]) {
+    return navClientCache[cacheKey]
   }
 
   const NAVUSERNAME = process.env.SOAP_USERNAME
@@ -43,24 +44,26 @@ export async function getNavClient(wsdlName = 'Service_Item_Card') {
   const WSDL_URL = `http://192.168.1.200:7047/DynamicsNAV110/WS/FORTRESS_LIVE/Page/${wsdlName}?wsdl`
 
   try {
-    const security = new soap.NTLMSecurity({
-      username: NAVUSERNAME,
-      password: NAVUSERPASSWORD,
-      domain: DOMAIN,
-    })
-
     const wsdl_headers = {}
-    const wsdl_options = { httpAgent: ntlmAgent }
-
-    security.addHeaders(wsdl_headers)
-    security.addOptions(wsdl_options)
+    const wsdl_options = { httpAgent: safeAgent }
 
     const client = await soap.createClientAsync(WSDL_URL, {
       wsdl_headers,
       wsdl_options,
     })
 
-    client.setSecurity(security)
+    // ✅ AUTH MODE SELECTOR
+    if (authMode === 'ntlm') {
+      const security = new soap.NTLMSecurity({
+        username: NAVUSERNAME,
+        password: NAVUSERPASSWORD,
+        domain: DOMAIN,
+      })
+      client.setSecurity(security)
+    } else {
+      // ✅ BASIC AUTH (FOR SERVICE ITEM)
+      client.setSecurity(new soap.BasicAuthSecurity(NAVUSERNAME, NAVUSERPASSWORD))
+    }
 
     client.on('request', (xml) => {
       console.log('\n📤 NAV SOAP REQUEST:\n', xml)
@@ -70,23 +73,24 @@ export async function getNavClient(wsdlName = 'Service_Item_Card') {
       console.log('\n📥 NAV SOAP RESPONSE:\n', xml)
     })
 
-    navClientCache[wsdlName] = client
+    navClientCache[cacheKey] = client
 
-    logNav('✅ NTLM NAV SOAP Client Ready', {
+    logNav('✅ NAV SOAP Client Ready', {
       WSDL_URL,
       NAVUSERNAME,
       DOMAIN,
+      AUTH: authMode.toUpperCase(),
     })
 
     return client
   } catch (err) {
-    console.error('❌ Failed to create NTLM NAV SOAP client:', err)
+    console.error('❌ Failed to create NAV SOAP client:', err)
     throw err
   }
 }
 
 // ===================================================================
-// GET /soap/service-items?itemNo=123&serialNo=456
+// ✅ GET /soap/service-items  (FORCED BASIC AUTH ✅)
 // ===================================================================
 router.get('/service-items', async (req, res) => {
   const { itemNo, serialNo } = req.query
@@ -96,7 +100,8 @@ router.get('/service-items', async (req, res) => {
   }
 
   try {
-    const client = await getNavClient('Service_Item_Card')
+    // ✅ BASIC AUTH FIX HERE
+    const client = await getNavClient('Service_Item_Card', 'basic')
 
     const params = {
       filter: [
@@ -128,7 +133,7 @@ router.get('/service-items', async (req, res) => {
 })
 
 // ===================================================================
-// POST /soap/service-items
+// ✅ POST /soap/service-items  (FORCED BASIC AUTH ✅)
 // ===================================================================
 router.post('/service-items', async (req, res) => {
   const formData = req.body
@@ -142,7 +147,9 @@ router.post('/service-items', async (req, res) => {
   }
 
   try {
-    const client = await getNavClient('Service_Item_Card')
+    // ✅ BASIC AUTH FIX HERE
+    const client = await getNavClient('Service_Item_Card', 'basic')
+
     const payload = { ...formData }
 
     delete payload.itemNumber
@@ -171,18 +178,18 @@ router.post('/service-items', async (req, res) => {
 })
 
 // ===================================================================
-// ✅ GET /soap/customers?search=ABC (FIXED)
+// ✅ GET /soap/customers  (NTLM KEPT ✅)
 // ===================================================================
 router.get('/customers', async (req, res) => {
   const search = req.query.search
   if (!search) return res.json({ success: true, data: [] })
 
   try {
-    // ✅ MUST BE Customer_Card
-    const client = await getNavClient('Customer_Card')
+    // ✅ NTLM AUTH KEPT HERE
+    const client = await getNavClient('Customer_Card', 'ntlm')
 
     const params = {
-      filter: [{ Field: 'Search_Name', Criteria: `*${search}*` }],
+      filter: [{ Field: 'Name', Criteria: `*${search}*` }],
       setSize: 10,
     }
 
@@ -203,7 +210,7 @@ router.get('/customers', async (req, res) => {
 })
 
 // ===================================================================
-// ✅ POST /soap/customers
+// ✅ POST /soap/customers  (NTLM KEPT ✅)
 // ===================================================================
 router.post('/customers', async (req, res) => {
   const formData = req.body
@@ -217,7 +224,8 @@ router.post('/customers', async (req, res) => {
   }
 
   try {
-    const client = await getNavClient('Customer_Card')
+    // ✅ NTLM AUTH KEPT HERE
+    const client = await getNavClient('Customer_Card', 'ntlm')
 
     const payload = {
       Name: formData.customerName,
