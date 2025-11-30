@@ -907,6 +907,7 @@ async function handleSubmit() {
 async function fetchSavedData(itemNumber, serialNumber) {
   try {
     const res = await axios.get(`/soap/service-items?itemNo=${itemNumber}&serialNo=${serialNumber}`)
+    console.log('fetchSavedData response:', res)
     if (res.data?.success && res.data.data) {
       const savedData = res.data.data
 

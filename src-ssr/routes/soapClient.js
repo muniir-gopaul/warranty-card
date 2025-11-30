@@ -2,7 +2,6 @@
 import express from 'express'
 import soap from 'soap'
 import util from 'util'
-import http from 'http'
 
 const router = express.Router()
 
@@ -15,80 +14,39 @@ function logNav(label, data) {
   console.log(util.inspect(data, { colors: true, depth: null, compact: false }))
 }
 
-// =======================================================
-// ✅ SAFE HTTP AGENT (NO KEEP-ALIVE, SINGLE SOCKET)
-// =======================================================
-const safeAgent = new http.Agent({
-  keepAlive: false,
-  maxSockets: 1,
-})
-
-// =======================================================
-// ✅ NAV SOAP CLIENT CACHE (PER WSDL + AUTH MODE)
-// =======================================================
-const navClientCache = {} // key = `${wsdlName}_${authMode}`
-
-// =======================================================
-// ✅ SOAP CLIENT FACTORY (NTLM OR BASIC)
-// =======================================================
-export async function getNavClient(wsdlName = 'Service_Item_Card', authMode = 'basic') {
-  const cacheKey = `${wsdlName}_${authMode}`
-  if (navClientCache[cacheKey]) {
-    return navClientCache[cacheKey]
-  }
-
+// --------------------------
+// SOAP Client Factory
+// --------------------------
+export async function getNavClient(wsdlName = 'Service_Item_Card') {
   const NAVUSERNAME = process.env.SOAP_USERNAME
   const NAVUSERPASSWORD = process.env.SOAP_PASSWORD
-  const DOMAIN = process.env.SOAP_DOMAIN || 'SRVNAV'
-
+  const DOMAIN = process.env.SOAP_DOMAIN || ''
   const WSDL_URL = `http://192.168.1.200:7047/DynamicsNAV110/WS/FORTRESS_LIVE/Page/${wsdlName}?wsdl`
-
   try {
-    // ✅ THIS IS THE CRITICAL FIX FOR 401
-    const basicAuth = Buffer.from(`${NAVUSERNAME}:${NAVUSERPASSWORD}`).toString('base64')
-
-    const wsdl_headers = {
-      Authorization: `Basic ${basicAuth}`, // ✅ PRE-AUTH FOR WSDL DOWNLOAD
-    }
-
-    const wsdl_options = {
-      httpAgent: safeAgent,
-    }
-
-    const client = await soap.createClientAsync(WSDL_URL, {
-      wsdl_headers,
-      wsdl_options,
+    const security = new soap.NTLMSecurity({
+      username: NAVUSERNAME,
+      password: NAVUSERPASSWORD,
+      domain: DOMAIN,
+      negotiate: true,
     })
 
-    // ✅ NOW APPLY RUNTIME AUTH AFTER CLIENT EXISTS
-    if (authMode === 'ntlm') {
-      const security = new soap.NTLMSecurity({
-        username: NAVUSERNAME,
-        password: NAVUSERPASSWORD,
-        domain: DOMAIN,
-      })
-      client.setSecurity(security)
-    } else {
-      client.setSecurity(new soap.BasicAuthSecurity(NAVUSERNAME, NAVUSERPASSWORD))
-    }
+    const wsdl_headers = {}
+    const wsdl_options = {}
+    security.addHeaders(wsdl_headers)
+    security.addOptions(wsdl_options)
 
+    const client = await soap.createClientAsync(WSDL_URL, { wsdl_headers, wsdl_options })
+    client.setSecurity(security)
+
+    // Log SOAP requests and responses
     client.on('request', (xml) => {
       console.log('\n📤 NAV SOAP REQUEST:\n', xml)
     })
-
     client.on('response', (xml) => {
       console.log('\n📥 NAV SOAP RESPONSE:\n', xml)
     })
 
-    navClientCache[cacheKey] = client
-
-    logNav('✅ NAV SOAP Client Ready', {
-      WSDL_URL,
-      USER: NAVUSERNAME,
-      DOMAIN,
-      AUTH: authMode.toUpperCase(),
-    })
-
+    logNav('✅ NAV SOAP Client created', { WSDL_URL, NAVUSERNAME, DOMAIN })
     return client
   } catch (err) {
     console.error('❌ Failed to create NAV SOAP client:', err)
@@ -97,18 +55,17 @@ export async function getNavClient(wsdlName = 'Service_Item_Card', authMode = 'b
 }
 
 // ===================================================================
-// ✅ GET /soap/service-items  (FORCED BASIC AUTH ✅)
+// GET /soap/service-items?itemNo=123&serialNo=456
+// Fetch Service Item by Item_No + Serial_No
 // ===================================================================
 router.get('/service-items', async (req, res) => {
   const { itemNo, serialNo } = req.query
-
   if (!itemNo || !serialNo) {
     return res.status(400).json({ success: false, error: 'Both itemNo and serialNo are required.' })
   }
 
   try {
-    // ✅ BASIC AUTH FIX HERE
-    const client = await getNavClient('Service_Item_Card', 'basic')
+    const client = await getNavClient('Service_Item_Card')
 
     const params = {
       filter: [
@@ -124,8 +81,8 @@ router.get('/service-items', async (req, res) => {
     logNav('📬 NAV ReadMultiple result', result)
 
     const item = result?.ReadMultiple_Result?.Service_Item_Card?.[0]
-
     if (!item) {
+      logNav('⚠️ No item found', { itemNo, serialNo })
       return res.status(404).json({
         success: false,
         message: `No service item found for Item_No=${itemNo} and Serial_No=${serialNo}.`,
@@ -140,25 +97,22 @@ router.get('/service-items', async (req, res) => {
 })
 
 // ===================================================================
-// ✅ POST /soap/service-items  (FORCED BASIC AUTH ✅)
+// POST /soap/service-items
+// Create or Update Service Item Card
 // ===================================================================
 router.post('/service-items', async (req, res) => {
   const formData = req.body
   console.log('\n📨 Received Service Item form data:', formData)
-
-  if (!formData?.itemNumber || !formData?.serialNumber) {
-    return res.status(400).json({
-      success: false,
-      error: 'Item Number and Serial Number are required.',
-    })
-  }
+  if (!formData?.itemNumber || !formData?.serialNumber)
+    return res
+      .status(400)
+      .json({ success: false, error: 'Item Number and Serial Number are required.' })
 
   try {
-    // ✅ BASIC AUTH FIX HERE
-    const client = await getNavClient('Service_Item_Card', 'basic')
-
+    const client = await getNavClient('Service_Item_Card')
     const payload = { ...formData }
 
+    // NAV does not allow updates to certain fields
     delete payload.itemNumber
     delete payload.serialNumber
     delete payload.isNew
@@ -185,29 +139,51 @@ router.post('/service-items', async (req, res) => {
 })
 
 // ===================================================================
-// ✅ GET /soap/customers  (NTLM KEPT ✅)
+// GET /soap/customers?search=ABC
+// Fetch Customers by Name (CustomerCard service)
 // ===================================================================
 router.get('/customers', async (req, res) => {
   const search = req.query.search
   if (!search) return res.json({ success: true, data: [] })
 
+  const NAVUSERNAME = process.env.SOAP_USERNAME
+  console.log('\n📨 NAV Customer Search Username:', NAVUSERNAME)
+  const NAVUSERPASSWORD = process.env.SOAP_PASSWORD
+  console.log('\n📨 NAV Customer Search Password:', NAVUSERPASSWORD)
+  const DOMAIN = process.env.SOAP_DOMAIN || ''
+  console.log('\n📨 NAV Customer Search Domain:', DOMAIN)
+  const WSDL_URL = `http://192.168.1.200:7047/DynamicsNAV110/WS/FORTRESS_LIVE/Page/Customer_Card?wsdl`
+  console.log('\n📨 NAV Customer Search WSDL URL:', WSDL_URL)
+
   try {
-    // ✅ NTLM AUTH KEPT HERE
-    const client = await getNavClient('Customer_Card', 'ntlm')
+    const security = new soap.NTLMSecurity({
+      username: NAVUSERNAME,
+      password: NAVUSERPASSWORD,
+      domain: DOMAIN,
+      negotiate: true,
+    })
+    console.log('\n📨 NAV Customer Search Security Configured', security)
+    const wsdl_headers = {}
+    const wsdl_options = {}
+    security.addHeaders(wsdl_headers)
+    security.addOptions(wsdl_options)
+
+    const client = await soap.createClientAsync(WSDL_URL, { wsdl_headers, wsdl_options })
+    client.setSecurity(security)
 
     const params = {
-      filter: [{ Field: 'Name', Criteria: `*${search}*` }],
+      filter: [{ Field: 'Search_Name', Criteria: `*${search}*` }],
       setSize: 10,
     }
 
-    logNav('📨 NAV Customer Search params', params)
+    console.log('\n📨 NAV Customer Search params:', params)
 
     const [result] = await client.ReadMultipleAsync(params)
 
-    logNav('📬 NAV Customer Search result', result)
+    console.log('\n📬 NAV Customer Search result:', result)
 
     const customers =
-      result?.ReadMultiple_Result?.Customer_Card || result?.ReadMultiple_Result?.CustomerCard || []
+      result?.ReadMultiple_Result?.CustomerCard || result?.ReadMultiple_Result?.Customer_Card || []
 
     res.json({ success: true, data: customers })
   } catch (err) {
@@ -216,9 +192,10 @@ router.get('/customers', async (req, res) => {
   }
 })
 
-// ===================================================================
-// ✅ POST /soap/customers  (NTLM KEPT ✅)
-// ===================================================================
+//------------------------------------------------------------
+// POST /soap/customers
+// Create or Update Customer (from form submission)
+// ------------------------------------------------------------
 router.post('/customers', async (req, res) => {
   const formData = req.body
   logNav('📨 Received Customer Form Data', formData)
@@ -231,15 +208,19 @@ router.post('/customers', async (req, res) => {
   }
 
   try {
-    // ✅ NTLM AUTH KEPT HERE
-    const client = await getNavClient('Customer_Card', 'ntlm')
+    const client = await getNavClient('CustomerCard')
 
     const payload = {
       Name: formData.customerName,
       Title: formData.title || '',
       ID_Number: formData.idNumber || '',
+      // Trading_Name: formData.tradingName || '',  ❌ remove or rename
+      // Registered_to_MRA_as: formData.registeredMraName || '',
+      // Customer_Category: formData.customerCategory || '',
       Customer_Group: formData.customerGroup || '',
       Customer_Type_MRA: formData.customerType || '',
+      // Blocked: formData.status || ' ',
+      // Financed_By: formData.financedBy || '',
       Address: formData.address1 || '',
       Address_2: formData.address2 || '',
       Post_Code: formData.postCode || '',
@@ -250,18 +231,20 @@ router.post('/customers', async (req, res) => {
       Fax_No: formData.faxNumber || '',
     }
 
+    // 🩹 Remove No if empty — NAV will auto-generate
     if (formData.customerNumber) {
       payload.No = formData.customerNumber
     }
 
     logNav('🚀 NAV SOAP Create Payload', payload)
 
-    const [result] = await client.CreateAsync({ Customer_Card: payload })
+    // ✅ Always create
+    const [result] = await client.CreateAsync({ CustomerCard: payload })
     logNav('📦 NAV SOAP Raw Response', result)
 
-    const card = result?.Customer_Card || result?.Create_Result?.Customer_Card || null
+    const card = result?.CustomerCard || result?.Create_Result?.CustomerCard || null
 
-    if (!card) throw new Error('NAV did not return a valid Customer Card.')
+    if (!card) throw new Error('NAV did not return a valid CustomerCard.')
 
     res.json({ success: true, data: card })
   } catch (err) {
