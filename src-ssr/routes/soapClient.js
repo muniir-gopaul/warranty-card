@@ -150,7 +150,7 @@ router.get('/customers', async (req, res) => {
   const NAVUSERNAME = process.env.SOAP_USERNAME
   const NAVUSERPASSWORD = process.env.SOAP_PASSWORD
   const DOMAIN = process.env.SOAP_DOMAIN || ''
-  const WSDL_URL = `http://sapmobile:7047/DynamicsNAV110/WS/CRONUS%20UK%20Ltd./Page/CustomerCard?wsdl`
+  const WSDL_URL = `http://srvnav:7047/DynamicsNAV110/WS/FORTRESS_LIVE/Page/Customer_Card?wsdl`
 
   try {
     const security = new soap.NTLMSecurity({
