@@ -147,13 +147,9 @@ router.get('/customers', async (req, res) => {
   if (!search) return res.json({ success: true, data: [] })
 
   const NAVUSERNAME = process.env.SOAP_USERNAME
-  console.log('\n📨 NAV Customer Search Username:', NAVUSERNAME)
   const NAVUSERPASSWORD = process.env.SOAP_PASSWORD
-  console.log('\n📨 NAV Customer Search Password:', NAVUSERPASSWORD)
   const DOMAIN = process.env.SOAP_DOMAIN || ''
-  console.log('\n📨 NAV Customer Search Domain:', DOMAIN)
   const WSDL_URL = `http://srvnav:7047/DynamicsNAV110/WS/FORTRESS_LIVE/Page/Customer_Card?wsdl`
-  console.log('\n📨 NAV Customer Search WSDL URL:', WSDL_URL)
 
   try {
     const security = new soap.NTLMSecurity({
@@ -162,7 +158,6 @@ router.get('/customers', async (req, res) => {
       domain: DOMAIN,
       negotiate: true,
     })
-    console.log('\n📨 NAV Customer Search Security Configured', security)
     const wsdl_headers = {}
     const wsdl_options = {}
     security.addHeaders(wsdl_headers)
