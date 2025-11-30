@@ -1,0 +1,1 @@
+import{d as t}from"../server-entry.js";import i from"axios";import"vue";import"quasar";import"vue/server-renderer";import"pinia";import"vue-router";const r=i.create({baseURL:"https://api.example.com"}),l=t(({app:o})=>{o.config.globalProperties.$axios=i,o.config.globalProperties.$api=r});export{r as api,l as default};

@@ -1,0 +1,1 @@
+import{Q as a,a as r}from"./QLayout-DRD6PZlJ.js";import{r as n,c as s,o as _,w as e,b as o}from"./index-C9XCHekm.js";const m={__name:"LoginLayout",setup(c){return(u,l)=>{const t=n("router-view");return _(),s(r,{view:"lHh Lpr lFf"},{default:e(()=>[o(a,null,{default:e(()=>[o(t)]),_:1})]),_:1})}}};export{m as default};
