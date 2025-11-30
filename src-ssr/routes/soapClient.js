@@ -23,7 +23,7 @@ export async function getNavClient(wsdlName = 'Service_Item_Card') {
   const DOMAIN = process.env.SOAP_DOMAIN || ''
 
   // ✅ MUST MATCH YOUR WORKING CUSTOMER DOMAIN
-  const BASE_URL = process.env.SOAP_BASE_URL || 'http://192.168.1.200:7047'
+  const BASE_URL = process.env.SOAP_BASE_URL || 'http://srvnav:7047'
 
   const WSDL_URL = `${BASE_URL}/DynamicsNAV110/WS/FORTRESS_LIVE/Page/${wsdlName}?wsdl`
 
