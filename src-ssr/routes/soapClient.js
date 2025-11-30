@@ -21,7 +21,7 @@ export async function getNavClient(wsdlName = 'Service_Item_Card') {
   const NAVUSERNAME = process.env.SOAP_USERNAME
   const NAVUSERPASSWORD = process.env.SOAP_PASSWORD
   const DOMAIN = process.env.SOAP_DOMAIN || ''
-  const WSDL_URL = `http://192.168.1.200:7047/DynamicsNAV110/WS/FORTRESS_LIVE/Page/${wsdlName}?wsdl`
+  const WSDL_URL = `http://srvnav:7047/DynamicsNAV110/WS/FORTRESS_LIVE/Page/${wsdlName}?wsdl`
   try {
     const security = new soap.NTLMSecurity({
       username: NAVUSERNAME,
@@ -152,7 +152,7 @@ router.get('/customers', async (req, res) => {
   console.log('\n📨 NAV Customer Search Password:', NAVUSERPASSWORD)
   const DOMAIN = process.env.SOAP_DOMAIN || ''
   console.log('\n📨 NAV Customer Search Domain:', DOMAIN)
-  const WSDL_URL = `http://192.168.1.200:7047/DynamicsNAV110/WS/FORTRESS_LIVE/Page/Customer_Card?wsdl`
+  const WSDL_URL = `http://srvnav:7047/DynamicsNAV110/WS/FORTRESS_LIVE/Page/Customer_Card?wsdl`
   console.log('\n📨 NAV Customer Search WSDL URL:', WSDL_URL)
 
   try {
@@ -208,7 +208,7 @@ router.post('/customers', async (req, res) => {
   }
 
   try {
-    const client = await getNavClient('CustomerCard')
+    const client = await getNavClient('Customer_Card')
 
     const payload = {
       Name: formData.customerName,
