@@ -60,28 +60,10 @@
               label="Trading Name"
               class="q-my-md"
             />
-            <q-input
-              v-model="formData.registeredMraName"
-              type="text"
-              outlined
-              dense
-              label="Registered to MRA as"
-              class="q-my-md"
-            />
           </div>
 
           <!-- right -->
           <div class="col-12 col-md-6">
-            <q-select
-              v-model="formData.customerCategory"
-              :options="customerCategoryOptions"
-              outlined
-              dense
-              :rules="[required]"
-              label="Customer Category"
-              emit-value
-              map-options
-            />
             <q-select
               v-model="formData.customerGroup"
               :options="customerGroupOptions"
@@ -102,16 +84,7 @@
               emit-value
               map-options
             />
-            <q-select
-              v-model="formData.status"
-              :options="statusOptions"
-              outlined
-              dense
-              :rules="[required]"
-              label="Status (Blocked)"
-              emit-value
-              map-options
-            />
+
             <q-input
               v-model="formData.MRAType"
               type="text"
@@ -230,13 +203,13 @@ const required = (val) => !!val || 'Required'
 const emailRule = (val) => !val || /.+@.+\..+/.test(val) || 'Invalid email'
 
 // Dropdown data
-const customerCategoryOptions = ref([{ label: 'STANDARD', value: '0' }])
+// const customerCategoryOptions = ref([{ label: 'STANDARD', value: '0' }])
 const customerGroupOptions = ref([{ label: 'Customer', value: '_CUSTOMER' }])
 const customerTypeOptions = ref([
   { label: 'B2B', value: 'B2B' },
   { label: 'B2C', value: 'B2C' },
 ])
-const statusOptions = ref([{ label: 'Active', value: 'Active' }])
+// const statusOptions = ref([{ label: 'Active', value: 'Active' }])
 
 // Form model
 const formData = reactive({

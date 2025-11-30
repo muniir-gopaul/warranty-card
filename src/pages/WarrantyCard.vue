@@ -376,14 +376,7 @@
               class="q-mb-md"
               readonly
             />
-            <q-input
-              label="Post Code"
-              v-model="formData.postCode"
-              dense
-              outlined
-              class="q-mb-md"
-              readonly
-            />
+
             <q-input
               label="Address"
               v-model="formData.address"
@@ -756,7 +749,7 @@ async function fetchItemDetails() {
         address: item.Address || '',
         city: item.City || '',
         purchaseAt: item.Purchased_At || '',
-        postCode: item.Post_Code || '',
+        // postCode: item.Post_Code || '',
         contact: item.Contact || '',
         salesDate: item.Sales_Date || '',
         invoiceNo: item.Invoice_No || '',
@@ -968,7 +961,7 @@ async function fetchSavedData(itemNumber, serialNumber) {
         address: savedData.Address || '',
         city: savedData.City || '',
         purchaseAt: savedData.Purchased_At || '',
-        postCode: savedData.Post_Code || '',
+        // postCode: savedData.Post_Code || '',
         contact: savedData.Contact || '',
         salesDate: savedData.Sales_Date || '',
         invoiceNo: savedData.Invoice_No || '',
@@ -1065,7 +1058,7 @@ async function onCustomerSelected(selected) {
       formData.customerNumber = detailedCustomer.No || ''
       formData.address = detailedCustomer.Address || ''
       formData.city = detailedCustomer.City || ''
-      formData.postCode = detailedCustomer.Post_Code || ''
+      // formData.postCode = detailedCustomer.Post_Code || ''
       formData.phoneNumber = detailedCustomer.Phone_No || ''
       formData.contact = detailedCustomer.ContactName || ''
       formData.purchaseAt = detailedCustomer.Purchased_At || ''

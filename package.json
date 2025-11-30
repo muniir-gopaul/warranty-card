@@ -28,6 +28,7 @@
     "node-fetch": "^3.3.2",
     "node-ntlm-client": "^0.1.2",
     "ntlm-client": "^0.1.1",
+    "pdf-lib": "^1.17.1",
     "pinia": "^3.0.1",
     "pizzip": "^3.2.0",
     "quasar": "^2.16.0",
